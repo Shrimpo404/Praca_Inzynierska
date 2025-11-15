@@ -13,7 +13,7 @@ function SelectGroup({...props}) {
 }
 
 function SelectValue({...props}) {
-    return <SelectPrimitive.Root data-slot="select-value" {...props} />
+    return <SelectPrimitive.Value data-slot="select-value" {...props} />
 }
 
 function SelectTrigger({className, size = "default", children, ...props}) {

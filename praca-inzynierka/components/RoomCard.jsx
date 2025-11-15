@@ -22,7 +22,7 @@ export function RoomCard({ room, onBook }) {
                     </div>
                     <div className="text-right">
                         <p className="text-muted-foreground text-sm">za noc</p>
-                        <p className="text-primary">${room.Price}</p>
+                        <p className="text-primary">{room.Price} zł</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-4 mt-4 mb-4 text-sm text-muted-foreground">

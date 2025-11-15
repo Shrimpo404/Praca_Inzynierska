@@ -7,7 +7,7 @@ export function RoomCard({ room, onBook }) {
     return (
         <Card className="overflow-hidden hover:shadow-lg transition-shadow">
             <div className="relative h-56 overflow-hidden">
-                <img src={room.image} alt={room.name} className="w-full h-full object-cover"/>
+                <img src={room.Image} alt={room.Name} className="w-full h-full object-cover"/>
                 {room.Status !== 1 && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <Badge variant="secondary" className="text-lg">Nie Dostępny</Badge>

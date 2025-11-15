@@ -32,6 +32,21 @@ const SearchBar = ({onSearch}) => {
                         </PopoverContent>
                     </Popover>
                 </div>
+
+                <div>
+                    <label className="text-sm text-muted-foreground mb-2 block">Check out</label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start">
+                                <CalendarIcon className="mr-2 h-4 w-4"/>
+                                {checkOut ? format(checkOut, "PPP") : "Select date"}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar mode="single" selected={checkOut} onSelect={setCheckOut} disabled = {(date) => date < new Date() || (checkIn ? date <= checkIn : false)} initialFocus />
+                        </PopoverContent>
+                    </Popover>
+                </div>
                 <div>
                     <label className="text-sm text-muted-foreground mb-2 block">Guests</label>
                     <Select value = {guests.toString()} onValueChange={(val) => setGuests(Number(val))}>

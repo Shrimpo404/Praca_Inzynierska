@@ -1,8 +1,8 @@
 import React from "react"
-import {CheckIcon,ChevronUpIcon} from "lucide-react";
-import * as SelectPrimitive from "react-select";
+import {CheckIcon,ChevronUpIcon} from "lucide-react"
+import * as SelectPrimitive from "@radix-ui/react-select"
 import {cn} from "./utils.js"
-import {SelectScrollUpButton} from "@radix-ui/react-select";
+import {SelectScrollUpButton} from "@radix-ui/react-select"
 
 function Select({...props}) {
     return <SelectPrimitive.Root data-slot="select" {...props} ></SelectPrimitive.Root>

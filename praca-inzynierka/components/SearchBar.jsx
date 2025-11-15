@@ -1,8 +1,10 @@
 import React, {useState} from 'react'
 import {Calendar as CalendarIcon, Users, Search} from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import {Calendar} from "./ui/Calendar.jsx";
 import {Button} from "./ui/Button.jsx";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "./ui/select";
+import {format} from "date-fns";
 
 const SearchBar = ({onSearch}) => {
     const [checkIn, setCheckIn] = useState(undefined)

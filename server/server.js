@@ -75,7 +75,7 @@ app.post("/api/reservations", async (req, res) => {
         firstName, lastName, email, phone,
         roomId, checkIn, checkOut,
         price, adults, kids,
-        selectedServices // Tablica ID usług np. [1, 3]
+        selectedServices
     } = req.body;
 
     const connection = await db.getConnection();

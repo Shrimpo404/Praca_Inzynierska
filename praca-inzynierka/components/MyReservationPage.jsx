@@ -98,7 +98,7 @@ export function MyReservationPage() {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">Goście:</span>
-                                            <span className="font-medium">{reservation.Adults} dorosłych, {reservation.Kids} dzieci</span>
+                                            <span className="font-medium">{reservation.Adults} os.</span>
                                         </div>
                                     </div>
                                 </div>

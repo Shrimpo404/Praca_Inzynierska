@@ -71,12 +71,7 @@ app.get("/api/services", async (req, res) => {
 
 // --- REZERWACJE ---
 app.post("/api/reservations", async (req, res) => {
-    const {
-        firstName, lastName, email, phone,
-        roomId, checkIn, checkOut,
-        price, adults, kids,
-        selectedServices
-    } = req.body;
+    const { firstName, lastName, email, phone, roomId, checkIn, checkOut, price, adults, selectedServices } = req.body;
 
     const connection = await db.getConnection();
 
@@ -96,8 +91,8 @@ app.post("/api/reservations", async (req, res) => {
         }
 
         const [reservationResult] = await connection.query(
-            `INSERT INTO reservations (GuestID, RoomID, CheckIn, CheckOut, Status, Price, Adults, Kids) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [guestId, roomId, checkIn, checkOut, 'Confirmed', price, adults, kids]
+            `INSERT INTO reservations (GuestID, RoomID, CheckIn, CheckOut, Status, Price, Adults) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [guestId, roomId, checkIn, checkOut, 'Confirmed', price, adults]
         );
         const reservationId = reservationResult.insertId;
 

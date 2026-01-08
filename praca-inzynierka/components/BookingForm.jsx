@@ -50,7 +50,6 @@ export function BookingForm({ room, searchDetails, onConfirm, onCancel }) {
             checkOut: searchDetails.checkOut.toISOString().split('T')[0],
             price: totalPrice,
             adults: searchDetails.guests,
-            kids: 0,
             selectedServices
         };
 

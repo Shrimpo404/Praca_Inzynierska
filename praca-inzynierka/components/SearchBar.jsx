@@ -5,6 +5,7 @@ import {Calendar} from "./ui/Calendar.jsx";
 import {Button} from "./ui/Button.jsx";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "./ui/select";
 import {format} from "date-fns";
+import {pl} from "date-fns/locale";
 
 const SearchBar = ({onSearch}) => {
     const [checkIn, setCheckIn] = useState(undefined)
@@ -19,12 +20,12 @@ const SearchBar = ({onSearch}) => {
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                    <label className="text-sm text-muted-foreground mb-2 block">Check in</label>
+                    <label className="text-sm text-muted-foreground mb-2 block">Data zameldowania</label>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start">
+                            <Button variant="outline" className="w-full justify-start text-left font-normal">
                                 <CalendarIcon className="mr-2 h-4 w-4"/>
-                                {checkIn ? format(checkIn,"PPP") : "Select date"}
+                                {checkIn ? format(checkIn, "PPP", {locale: pl}) : "Wybierz datę"}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
@@ -34,12 +35,12 @@ const SearchBar = ({onSearch}) => {
                 </div>
 
                 <div>
-                    <label className="text-sm text-muted-foreground mb-2 block">Check out</label>
+                    <label className="text-sm text-muted-foreground mb-2 block">Data wymeldowania</label>
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start">
+                            <Button variant="outline" className="w-full justify-start text-left font-normal">
                                 <CalendarIcon className="mr-2 h-4 w-4"/>
-                                {checkOut ? format(checkOut, "PPP") : "Select date"}
+                                {checkOut ? format(checkOut, "PPP", {locale: pl}) : "Wybierz datę"}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
@@ -48,7 +49,7 @@ const SearchBar = ({onSearch}) => {
                     </Popover>
                 </div>
                 <div>
-                    <label className="text-sm text-muted-foreground mb-2 block">Guests</label>
+                    <label className="text-sm text-muted-foreground mb-2 block">Goście</label>
                     <Select value = {guests.toString()} onValueChange={(val) => setGuests(Number(val))}>
                         <SelectTrigger>
                             <Users className="mr-2 h-4 w-4"/>
@@ -57,7 +58,7 @@ const SearchBar = ({onSearch}) => {
                         <SelectContent>
                             {[1,2,3,4,5,6].map((num) => (
                                 <SelectItem key={num} value={num.toString()}>
-                                    {num} {num === 1 ? "Guests" : "Guest"}
+                                    {num} {num === 1 ? "Osoba" : "Osób"}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -66,7 +67,7 @@ const SearchBar = ({onSearch}) => {
                 <div className="flex items-end">
                     <Button onClick={handleSearch} className="w-full">
                         <Search className="mr-2 h-4 w-4"/>
-                        Search
+                        Szukaj
                     </Button>
                 </div>
             </div>

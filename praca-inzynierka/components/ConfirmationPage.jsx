@@ -48,7 +48,7 @@ export function ConfirmationPage({ booking, onNewBooking, onViewReservations }) 
 
                         <div className="flex items-center justify-between pt-1">
                             <span className="flex items-center text-muted-foreground">
-                                <CreditCard className="w-4 h-4 mr-2" /> Kwota całkowita
+                                <CreditCard className="w-4 h-4 mr-2" /> Do zapłaty (przy meldunku)
                             </span>
                             <span className="text-xl font-bold text-primary">{booking.price} zł</span>
                         </div>

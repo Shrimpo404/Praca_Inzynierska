@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card.jsx";
 import { Button } from "./ui/Button.jsx";
-import { Mail, Phone, User, ArrowLeft } from "lucide-react";
+import { Mail, Phone, User, ArrowLeft, Check } from "lucide-react";
 
 export function BookingForm({ room, searchDetails, onConfirm, onCancel }) {
     const [formData, setFormData] = useState({
@@ -10,7 +10,6 @@ export function BookingForm({ room, searchDetails, onConfirm, onCancel }) {
     const [loading, setLoading] = useState(false);
     const [availableServices, setAvailableServices] = useState([]);
     const [selectedServices, setSelectedServices] = useState([]);
-
     const nights = Math.ceil((searchDetails.checkOut.getTime() - searchDetails.checkIn.getTime()) / (1000 * 60 * 60 * 24));
 
     useEffect(() => {
@@ -28,12 +27,14 @@ export function BookingForm({ room, searchDetails, onConfirm, onCancel }) {
         );
     };
 
+    // --- OBLICZANIE CENY ---
     const calculateTotal = () => {
         const roomCost = nights * room.Price;
         const servicesCost = selectedServices.reduce((acc, id) => {
             const service = availableServices.find(s => s.ServiceID === id);
-            return acc + (service ? Number(service.Price) : 0);
+            return acc + (service ? Number(service.Price) * nights : 0);
         }, 0);
+
         return roomCost + servicesCost;
     };
 
@@ -123,26 +124,26 @@ export function BookingForm({ room, searchDetails, onConfirm, onCancel }) {
 
                 {/* Sekcja Usług Dodatkowych */}
                 <Card>
-                    <CardHeader><CardTitle>Dodatki do pobytu</CardTitle></CardHeader>
+                    <CardHeader><CardTitle>Dodatki do pobytu (cena za dobę)</CardTitle></CardHeader>
                     <CardContent>
                         <div className="space-y-3">
                             {availableServices.length > 0 ? availableServices.map(service => (
                                 <div key={service.ServiceID}
-                                     className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors ${selectedServices.includes(service.ServiceID) ? 'border-primary bg-primary/5' : 'hover:bg-gray-50'}`}
+                                     className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all ${selectedServices.includes(service.ServiceID) ? 'border-black ring-1 ring-black bg-gray-50' : 'hover:bg-gray-50 border-gray-200'}`}
                                      onClick={() => toggleService(service.ServiceID)}>
                                     <div className="flex items-center gap-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedServices.includes(service.ServiceID)}
-                                            onChange={() => {}}
-                                            className="h-4 w-4 accent-primary"
-                                        />
+                                        <div className={`h-5 w-5 rounded border flex items-center justify-center ${selectedServices.includes(service.ServiceID) ? 'bg-black border-black text-white' : 'border-gray-300'}`}>
+                                            {selectedServices.includes(service.ServiceID) && <Check className="h-3 w-3" />}
+                                        </div>
                                         <div>
                                             <p className="font-medium">{service.Name}</p>
                                             <p className="text-xs text-muted-foreground">{service.Description}</p>
                                         </div>
                                     </div>
-                                    <span className="font-semibold">+{service.Price} zł</span>
+                                    <div className="text-right">
+                                        <p className="font-semibold">{service.Price} zł</p>
+                                        <p className="text-[10px] text-muted-foreground">/ doba</p>
+                                    </div>
                                 </div>
                             )) : (
                                 <p className="text-muted-foreground text-sm">Brak dostępnych usług dodatkowych.</p>
@@ -154,40 +155,42 @@ export function BookingForm({ room, searchDetails, onConfirm, onCancel }) {
 
             {/* PRAWA STRONA: Podsumowanie */}
             <div className="w-full md:w-80">
-                <Card className="sticky top-24 shadow-lg border-primary/20">
-                    <CardHeader className="bg-muted/30 pb-4">
+                <Card className="sticky top-24 shadow-lg border-t-4 border-t-black">
+                    <CardHeader className="bg-gray-50/50 pb-4 border-b">
                         <CardTitle className="text-lg">Twoja Rezerwacja</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6 space-y-4">
-                        <div className="space-y-2 pb-4 border-b">
+                        <div className="space-y-2 pb-4 border-b border-dashed">
                             <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">Pokój</span>
                                 <span className="font-medium">{room.Name}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Termin</span>
+                                <span className="text-muted-foreground">Długość pobytu</span>
                                 <span className="font-medium">{nights} {nights === 1 ? 'noc' : 'noce'}</span>
                             </div>
-                        </div>
-
-                        {/* Wylistowanie kosztów */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
+                            <div className="flex justify-between text-sm pt-1">
                                 <span>Cena pokoju</span>
                                 <span>{nights * room.Price} zł</span>
                             </div>
-                            {selectedServices.map(id => {
-                                const s = availableServices.find(serv => serv.ServiceID === id);
-                                return s ? (
-                                    <div key={id} className="flex justify-between text-sm text-green-600">
-                                        <span>+ {s.Name}</span>
-                                        <span>{s.Price} zł</span>
-                                    </div>
-                                ) : null;
-                            })}
                         </div>
 
-                        <div className="pt-4 border-t mt-4">
+                        {selectedServices.length > 0 && (
+                            <div className="space-y-2 pb-4 border-b border-dashed">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Wybrane dodatki</p>
+                                {selectedServices.map(id => {
+                                    const s = availableServices.find(serv => serv.ServiceID === id);
+                                    return s ? (
+                                        <div key={id} className="flex justify-between text-sm text-gray-700">
+                                            <span>+ {s.Name} <span className="text-xs text-muted-foreground">(x{nights})</span></span>
+                                            <span>{s.Price * nights} zł</span>
+                                        </div>
+                                    ) : null;
+                                })}
+                            </div>
+                        )}
+
+                        <div className="pt-2">
                             <div className="flex justify-between items-center mb-6">
                                 <span className="font-bold text-lg">Razem</span>
                                 <span className="font-bold text-2xl text-primary">{totalPrice} zł</span>

@@ -71,13 +71,17 @@ app.get("/api/services", async (req, res) => {
 
 // --- REZERWACJE ---
 app.post("/api/reservations", async (req, res) => {
-    const { firstName, lastName, email, phone, roomId, checkIn, checkOut, price, adults, selectedServices } = req.body;
+    const {
+        firstName, lastName, email, phone,
+        roomId, checkIn, checkOut,
+        price, adults,
+        selectedServices
+    } = req.body;
 
     const connection = await db.getConnection();
 
     try {
         await connection.beginTransaction();
-
         let guestId;
         const [existingGuests] = await connection.query("SELECT GuestID FROM guests WHERE Email = ?", [email]);
         if (existingGuests.length > 0) {
@@ -89,15 +93,18 @@ app.post("/api/reservations", async (req, res) => {
             );
             guestId = guestResult.insertId;
         }
-
         const [reservationResult] = await connection.query(
             `INSERT INTO reservations (GuestID, RoomID, CheckIn, CheckOut, Status, Price, Adults) VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [guestId, roomId, checkIn, checkOut, 'Confirmed', price, adults]
         );
         const reservationId = reservationResult.insertId;
-
         if (selectedServices && selectedServices.length > 0) {
-            const serviceValues = selectedServices.map(serviceId => [reservationId, serviceId, 1]);
+            const startDate = new Date(checkIn);
+            const endDate = new Date(checkOut);
+            const diffTime = Math.abs(endDate - startDate);
+            const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+            const serviceValues = selectedServices.map(serviceId => [reservationId, serviceId, nights]);
+
             await connection.query(
                 "INSERT INTO reservation_services (ReservationID, ServiceID, Quantity) VALUES ?",
                 [serviceValues]
@@ -116,35 +123,49 @@ app.post("/api/reservations", async (req, res) => {
     }
 });
 
-app.get("/api/reservations/:id", async (req, res) => {
-    const reservationId = req.params.id;
+app.get("/api/reservations/:query", async (req, res) => {
+    const queryParam = req.params.query;
+    const isId = /^\d+$/.test(queryParam);
 
     try {
-        const [rows] = await db.query(`
+        let sql = `
             SELECT r.*, g.FirstName, g.LastName, g.Email, g.Phone, rm.Name as RoomName, rm.ImageURL, rm.Type 
             FROM reservations r
             JOIN guests g ON r.GuestID = g.GuestID
             JOIN rooms rm ON r.RoomID = rm.RoomID
-            WHERE r.ReservationID = ?
-        `, [reservationId]);
+        `;
 
-        if (rows.length === 0) {
-            return res.status(404).json({ error: "Nie znaleziono rezerwacji o takim numerze." });
+        let params = [];
+
+        if (isId) {
+            sql += ` WHERE r.ReservationID = ?`;
+            params = [queryParam];
+        } else {
+            sql += ` WHERE g.LastName LIKE ? OR CONCAT(g.FirstName, ' ', g.LastName) LIKE ?`;
+            params = [`%${queryParam}%`, `%${queryParam}%`];
         }
 
-        const reservation = rows[0];
+        const [rows] = await db.query(sql, params);
 
-        const [services] = await db.query(`
-            SELECT s.Name, s.Price 
-            FROM reservation_services rs
-            JOIN services s ON rs.ServiceID = s.ServiceID
-            WHERE rs.ReservationID = ?
-        `, [reservationId]);
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "Nie znaleziono rezerwacji pasujących do zapytania." });
+        }
 
-        res.json({ ...reservation, services });
+        const reservationsWithServices = await Promise.all(rows.map(async (reservation) => {
+            const [services] = await db.query(`
+                SELECT s.Name, s.Price, rs.Quantity 
+                FROM reservation_services rs
+                JOIN services s ON rs.ServiceID = s.ServiceID
+                WHERE rs.ReservationID = ?
+            `, [reservation.ReservationID]);
+
+            return { ...reservation, services };
+        }));
+
+        res.json(reservationsWithServices);
 
     } catch (error) {
-        console.error(`Błąd pobierania rezerwacji: ${error}`);
+        console.error(`Błąd wyszukiwania: ${error}`);
         res.status(500).json({ error: "Błąd serwera" });
     }
 });

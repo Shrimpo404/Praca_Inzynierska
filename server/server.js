@@ -174,10 +174,10 @@ app.get("/api/reservations/:query", async (req, res) => {
 app.get("/api/admin/reservations", async (req, res) => {
     try {
         const [rows] = await db.query(`
-            SELECT r.*, g.FirstName, g.LastName, g.Email, rm.RoomNumber 
+            SELECT r.*, g.FirstName, g.LastName, g.Email, g.Phone, rm.RoomNumber
             FROM reservations r
-            JOIN guests g ON r.GuestID = g.GuestID
-            JOIN rooms rm ON r.RoomID = rm.RoomID
+                     JOIN guests g ON r.GuestID = g.GuestID
+                     JOIN rooms rm ON r.RoomID = rm.RoomID
             ORDER BY r.CheckIn DESC
         `);
         res.json(rows);

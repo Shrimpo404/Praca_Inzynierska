@@ -142,7 +142,9 @@ function ReservationsTab() {
                                             <p className="text-sm text-muted-foreground">
                                                 Pokój {res.RoomNumber} • {format(new Date(res.CheckIn), "dd.MM.yyyy")} - {format(new Date(res.CheckOut), "dd.MM.yyyy")}
                                             </p>
-                                            <p className="text-xs text-gray-500 mt-1">{res.Email}</p>
+                                            <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                                                {res.Email} <span className="text-gray-300">|</span> tel: {res.Phone}
+                                            </p>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <Badge variant={res.Status === 'Confirmed' ? 'default' : 'destructive'}>

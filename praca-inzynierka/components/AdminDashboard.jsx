@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card.jsx";
 import { Button } from "./ui/Button.jsx";
 import { Badge } from "./ui/Badge.jsx";
-import { Trash2, Edit, Plus, Calendar, Save, X, UserCog } from "lucide-react";
+import { Trash2, Edit, Plus, Calendar, Save, X, UserCog, Search } from "lucide-react";
 import { format } from "date-fns";
 
 function ReservationsTab() {
     const [reservations, setReservations] = useState([]);
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({});
+    const [searchTerm, setSearchTerm] = useState("");
 
     const fetchReservations = () => {
         fetch("http://localhost:8080/api/admin/reservations")
@@ -51,88 +52,119 @@ function ReservationsTab() {
         fetchReservations();
     };
 
+    const filteredReservations = reservations.filter((res) => {
+        const lowerSearch = searchTerm.toLowerCase();
+        return (
+            res.ReservationID.toString().includes(lowerSearch) ||
+            res.LastName.toLowerCase().includes(lowerSearch) ||
+            res.FirstName.toLowerCase().includes(lowerSearch) ||
+            res.RoomNumber.toString().includes(lowerSearch)
+        );
+    });
+
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-bold">Lista Rezerwacji</h2>
+            <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold">Lista Rezerwacji</h2>
+                <span className="text-sm text-muted-foreground">Łącznie: {filteredReservations.length}</span>
+            </div>
+
+            <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <input
+                    type="text"
+                    placeholder="Szukaj po nazwisku, ID rezerwacji lub numerze pokoju..."
+                    className="pl-9 w-full border rounded-md p-2 text-sm"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+
             <div className="grid gap-4">
-                {reservations.map((res) => (
-                    <Card key={res.ReservationID} className="overflow-hidden">
-                        <CardContent className="p-4">
-                            {editingId === res.ReservationID ? (
-                                // TRYB EDYCJI
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-xs text-muted-foreground">Status</label>
-                                            <select
-                                                className="w-full border rounded p-2"
-                                                value={editForm.Status}
-                                                onChange={e => setEditForm({...editForm, Status: e.target.value})}
-                                            >
-                                                <option value="Confirmed">Potwierdzona</option>
-                                                <option value="Cancelled">Anulowana</option>
-                                                <option value="Pending">Oczekująca</option>
-                                            </select>
+                {filteredReservations.length > 0 ? (
+                    filteredReservations.map((res) => (
+                        <Card key={res.ReservationID} className="overflow-hidden">
+                            <CardContent className="p-4">
+                                {editingId === res.ReservationID ? (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs text-muted-foreground">Status</label>
+                                                <select
+                                                    className="w-full border rounded p-2"
+                                                    value={editForm.Status}
+                                                    onChange={e => setEditForm({...editForm, Status: e.target.value})}
+                                                >
+                                                    <option value="Confirmed">Potwierdzona</option>
+                                                    <option value="Cancelled">Anulowana</option>
+                                                    <option value="Pending">Oczekująca</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-muted-foreground">Nr Pokoju (ID)</label>
+                                                <input
+                                                    type="number"
+                                                    className="w-full border rounded p-2"
+                                                    value={editForm.RoomID}
+                                                    onChange={e => setEditForm({...editForm, RoomID: e.target.value})}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-muted-foreground">Od</label>
+                                                <input
+                                                    type="date"
+                                                    className="w-full border rounded p-2"
+                                                    value={editForm.CheckIn}
+                                                    onChange={e => setEditForm({...editForm, CheckIn: e.target.value})}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-muted-foreground">Do</label>
+                                                <input
+                                                    type="date"
+                                                    className="w-full border rounded p-2"
+                                                    value={editForm.CheckOut}
+                                                    onChange={e => setEditForm({...editForm, CheckOut: e.target.value})}
+                                                />
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label className="text-xs text-muted-foreground">Nr Pokoju</label>
-                                            <input
-                                                type="number"
-                                                className="w-full border rounded p-2"
-                                                value={editForm.RoomID} // Tutaj normalnie byłby select z listą dostępnych pokoi
-                                                onChange={e => setEditForm({...editForm, RoomID: e.target.value})}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs text-muted-foreground">Od</label>
-                                            <input
-                                                type="date"
-                                                className="w-full border rounded p-2"
-                                                value={editForm.CheckIn}
-                                                onChange={e => setEditForm({...editForm, CheckIn: e.target.value})}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs text-muted-foreground">Do</label>
-                                            <input
-                                                type="date"
-                                                className="w-full border rounded p-2"
-                                                value={editForm.CheckOut}
-                                                onChange={e => setEditForm({...editForm, CheckOut: e.target.value})}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2 justify-end">
-                                        <Button variant="outline" size="sm" onClick={() => setEditingId(null)}><X className="w-4 h-4 mr-1"/> Anuluj</Button>
-                                        <Button size="sm" onClick={saveEdit}><Save className="w-4 h-4 mr-1"/> Zapisz</Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                // TRYB PODGLĄDU
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <p className="font-bold">{res.FirstName} {res.LastName}</p>
-                                        <p className="text-sm text-muted-foreground">Pokój {res.RoomNumber} • {format(new Date(res.CheckIn), "dd.MM.yyyy")} - {format(new Date(res.CheckOut), "dd.MM.yyyy")}</p>
-                                        <p className="text-xs text-gray-500 mt-1">{res.Email}</p>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <Badge variant={res.Status === 'Confirmed' ? 'default' : 'destructive'}>
-                                            {res.Status}
-                                        </Badge>
-                                        <div className="flex gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => startEdit(res)}>
-                                                <Edit className="w-4 h-4" />
-                                            </Button>
-                                            <Button variant="destructive" size="sm" onClick={() => handleDelete(res.ReservationID)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
+                                        <div className="flex gap-2 justify-end">
+                                            <Button variant="outline" size="sm" onClick={() => setEditingId(null)}><X className="w-4 h-4 mr-1"/> Anuluj</Button>
+                                            <Button size="sm" onClick={saveEdit}><Save className="w-4 h-4 mr-1"/> Zapisz</Button>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                ))}
+                                ) : (
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="font-bold">
+                                                #{res.ReservationID} - {res.FirstName} {res.LastName}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Pokój {res.RoomNumber} • {format(new Date(res.CheckIn), "dd.MM.yyyy")} - {format(new Date(res.CheckOut), "dd.MM.yyyy")}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mt-1">{res.Email}</p>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <Badge variant={res.Status === 'Confirmed' ? 'default' : 'destructive'}>
+                                                {res.Status}
+                                            </Badge>
+                                            <div className="flex gap-2">
+                                                <Button variant="outline" size="sm" onClick={() => startEdit(res)}>
+                                                    <Edit className="w-4 h-4" />
+                                                </Button>
+                                                <Button variant="destructive" size="sm" onClick={() => handleDelete(res.ReservationID)}>
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : (
+                    <p className="text-center text-muted-foreground py-8">Nie znaleziono rezerwacji pasujących do wyszukiwania.</p>
+                )}
             </div>
         </div>
     );

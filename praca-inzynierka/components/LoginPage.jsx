@@ -24,14 +24,14 @@ export function LoginPage({ onLogin }) {
                 },
                 body: JSON.stringify(formData)
             });
-
             const data = await response.json();
-
-            if (response.ok && data.success) {
-                // Przekazujemy dane zalogowanego użytkownika do App.jsx
+            if (response.ok) {
+                if (data.token) {
+                    localStorage.setItem("authToken", data.token);
+                }
                 onLogin(data.user);
             } else {
-                setError(data.message || "Błąd logowania. Sprawdź dane.");
+                setError(data.error || data.message || "Błąd logowania. Sprawdź dane.");
             }
         } catch (err) {
             console.error("Login error:", err);

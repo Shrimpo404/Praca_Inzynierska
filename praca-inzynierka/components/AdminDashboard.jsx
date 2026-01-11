@@ -12,9 +12,22 @@ function ReservationsTab() {
     const [searchTerm, setSearchTerm] = useState("");
 
     const fetchReservations = () => {
-        fetch("http://localhost:8080/api/admin/reservations")
-            .then(res => res.json())
-            .then(data => setReservations(data))
+        const token = localStorage.getItem("authToken");
+        fetch("http://localhost:8080/api/admin/reservations", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
+            .then(res => {
+                if (res.status === 401 || res.status === 403) {
+                    alert("Sesja wygasła. Zaloguj się ponownie.");
+                    return [];
+                }
+                return res.json();
+            })
+            .then(data => {
+                if(Array.isArray(data)) setReservations(data);
+            })
             .catch(err => console.error(err));
     };
 
@@ -290,8 +303,17 @@ function UsersTab() {
     const [editForm, setEditForm] = useState({});
 
     const fetchUsers = () => {
-        fetch("http://localhost:8080/api/users")
-            .then(res => res.json())
+        const token = localStorage.getItem("authToken");
+
+        fetch("http://localhost:8080/api/users", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("Brak dostępu");
+                return res.json();
+            })
             .then(data => setUsers(data))
             .catch(err => console.error(err));
     };
@@ -302,9 +324,14 @@ function UsersTab() {
 
     const handleAddUser = async (e) => {
         e.preventDefault();
+        const token = localStorage.getItem("authToken");
+
         const res = await fetch("http://localhost:8080/api/users", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
             body: JSON.stringify(newUser)
         });
 
@@ -319,7 +346,14 @@ function UsersTab() {
 
     const handleDelete = async (id) => {
         if (!window.confirm("Czy na pewno usunąć tego użytkownika?")) return;
-        await fetch(`http://localhost:8080/api/users/${id}`, { method: "DELETE" });
+        const token = localStorage.getItem("authToken");
+
+        await fetch(`http://localhost:8080/api/users/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
         fetchUsers();
     };
 
@@ -329,9 +363,14 @@ function UsersTab() {
     };
 
     const saveEdit = async () => {
+        const token = localStorage.getItem("authToken");
+
         await fetch(`http://localhost:8080/api/users/${editingId}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
             body: JSON.stringify(editForm)
         });
         setEditingId(null);

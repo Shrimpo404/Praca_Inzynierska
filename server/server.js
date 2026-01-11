@@ -2,12 +2,15 @@ import express from "express";
 import mysql from "mysql2/promise";
 import cors from "cors";
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+const SECRET_KEY = 'JsonKey';
 
 const db = mysql.createPool({
     host: process.env.DB_HOST,
@@ -18,6 +21,23 @@ const db = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
+
+const verifyToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ error: "Brak dostępu. Zaloguj się." });
+    }
+
+    jwt.verify(token, SECRET_KEY, (err, user) => {
+        if (err) {
+            return res.status(403).json({ error: "Token jest nieważny lub wygasł." });
+        }
+        req.user = user;
+        next();
+    });
+};
 
 // --- POKOJE ---
 app.get("/api/rooms", async (req, res) => {
@@ -171,7 +191,7 @@ app.get("/api/reservations/:query", async (req, res) => {
 });
 
 // --- ADMINISTRACJA REZERWACJAMI ---
-app.get("/api/admin/reservations", async (req, res) => {
+app.get("/api/admin/reservations",verifyToken , async (req, res) => {
     try {
         const [rows] = await db.query(`
             SELECT r.*, g.FirstName, g.LastName, g.Email, g.Phone, rm.RoomNumber
@@ -186,7 +206,7 @@ app.get("/api/admin/reservations", async (req, res) => {
     }
 });
 
-app.delete("/api/reservations/:id", async (req, res) => {
+app.delete("/api/reservations/:id",verifyToken , async (req, res) => {
     const reservationId = req.params.id;
 
     try {
@@ -207,7 +227,7 @@ app.delete("/api/reservations/:id", async (req, res) => {
     }
 });
 
-app.put("/api/reservations/:id", async (req, res) => {
+app.put("/api/reservations/:id",verifyToken , async (req, res) => {
     const { Status, RoomID, CheckIn, CheckOut } = req.body;
     try {
         await db.query(
@@ -221,9 +241,7 @@ app.put("/api/reservations/:id", async (req, res) => {
 });
 
 // --- WYDARZENIA ---
-
-// Pobierz wydarzenia wraz z nazwą sali
-app.get("/api/events", async (req, res) => {
+app.get("/api/events",verifyToken, async (req, res) => {
     try {
         const [rows] = await db.query(`
             SELECT e.*, v.Name as VenueName 
@@ -237,7 +255,7 @@ app.get("/api/events", async (req, res) => {
     }
 });
 
-app.post("/api/events", async (req, res) => {
+app.post("/api/events",verifyToken, async (req, res) => {
     const { Name, Description, StartDate, EndDate, VenueID } = req.body;
     try {
         await db.query(
@@ -250,7 +268,7 @@ app.post("/api/events", async (req, res) => {
     }
 });
 
-app.delete("/api/events/:id", async (req, res) => {
+app.delete("/api/events/:id",verifyToken, async (req, res) => {
     try {
         await db.query("DELETE FROM events WHERE EventID = ?", [req.params.id]);
         res.json({ message: "Usunięto wydarzenie" });
@@ -272,22 +290,40 @@ app.get("/api/venues", async (req, res) => {
 // --- LOGOWANIE ---
 app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
+
     try {
-        const [users] = await db.query("SELECT * FROM users WHERE Username = ? AND Password = ?", [username, password]);
-        if (users.length > 0) {
-            const user = users[0];
-            res.json({ success: true, user: { id: user.UserID, username: user.Username, role: user.Role } });
-        } else {
-            res.status(401).json({ success: false, message: "Błędne dane" });
+        const [users] = await db.query("SELECT * FROM users WHERE Username = ?", [username]);
+
+        if (users.length === 0) {
+            return res.status(401).json({ error: "Nieprawidłowy login lub hasło" });
         }
+
+        const user = users[0];
+        if (password !== user.Password) {
+            return res.status(401).json({ error: "Nieprawidłowy login lub hasło" });
+        }
+        const token = jwt.sign(
+            { id: user.UserID, role: user.Role, username: user.Username },
+            SECRET_KEY,
+            { expiresIn: '1h' }
+        );
+        res.json({
+            token,
+            user: {
+                id: user.UserID,
+                username: user.Username,
+                role: user.Role
+            }
+        });
+
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: "Błąd serwera" });
     }
 });
-
 // --- ZARZĄDZANIE UŻYTKOWNIKAMI (CRUD) ---
 
-app.get("/api/users", async (req, res) => {
+app.get("/api/users",verifyToken, async (req, res) => {
     try {
         const [rows] = await db.query("SELECT UserID, Username, Role, Password FROM users");
         res.json(rows);
@@ -297,7 +333,7 @@ app.get("/api/users", async (req, res) => {
     }
 });
 
-app.post("/api/users", async (req, res) => {
+app.post("/api/users",verifyToken, async (req, res) => {
     const { Username, Password, Role } = req.body;
     try {
         const [existing] = await db.query("SELECT UserID FROM users WHERE Username = ?", [Username]);
@@ -316,7 +352,7 @@ app.post("/api/users", async (req, res) => {
     }
 });
 
-app.put("/api/users/:id", async (req, res) => {
+app.put("/api/users/:id",verifyToken, async (req, res) => {
     const { Username, Password, Role } = req.body;
     const userId = req.params.id;
 
@@ -332,7 +368,7 @@ app.put("/api/users/:id", async (req, res) => {
     }
 });
 
-app.delete("/api/users/:id", async (req, res) => {
+app.delete("/api/users/:id",verifyToken, async (req, res) => {
     try {
         await db.query("DELETE FROM users WHERE UserID = ?", [req.params.id]);
         res.json({ message: "Użytkownik usunięty" });
